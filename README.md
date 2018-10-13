@@ -3,7 +3,7 @@ Source code used to for the performance measurements in [Bläsius, Thomas; Fried
 
 ## Build
 ### CMake
-The CMake build is tested with VS 2017 and Make on Ubuntu on Windows. Requires [boost](https://www.boost.org/), specifically the `dynamic_bitset` library (header-only) and `filesystem` ([needs to be compiled](https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html#easy-build-and-install), consider using `--with-libraries=filesystem` to reduce compilation time). In the top-level directory, run `cmake .` to generate VS project files or Makefiles, depending on your OS. If CMake could not find your boost installation, `cmake . -DBOOST_ROOT:PATHNAME=/path/to/boost_1_68_0` should do the trick.
+The CMake build is tested with VS 2017 and Make on Ubuntu on Windows. Requires [boost](https://www.boost.org/), specifically the `dynamic_bitset` library (header-only) and `filesystem` ([needs to be compiled](https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html#easy-build-and-install), consider using `--with-libraries=filesystem` to reduce compilation time). After installing boost, navigate to the top-level directory of `enumhyp`. Run `cmake .` to generate VS project files or Makefiles, depending on your OS. If CMake could not find your boost installation, `cmake . -DBOOST_ROOT:PATHNAME=/path/to/boost_1_68_0` should do the trick.
 ### main.cpp
 Edit `src/main.cpp` to choose what the tool does.
 ### globals.h
