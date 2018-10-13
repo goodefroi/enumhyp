@@ -1,5 +1,12 @@
 bin
 
+ALL_BUILD.vcxproj
+ALL_BUILD.vcxproj.filters
+ZERO_CHECK.vcxproj
+ZERO_CHECK.vcxproj.filters
+enumhyp.sln
+
+
 # Created by https://www.gitignore.io/api/cmake,visualstudio,visualstudiocode
 
 ### CMake ###
