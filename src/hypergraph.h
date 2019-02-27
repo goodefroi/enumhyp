@@ -23,10 +23,12 @@ public:
 	Hypergraph(const Hypergraph &other);
 	Hypergraph(std::string path);
 	Hypergraph(const Table &t);
+	Hypergraph(int num_vertices, edge_vec edges);
 	~Hypergraph();
 	bool is_hitting_set(const edge &h) const;
 	void print_edges() const;
 	void save(std::string path) const;
+	Hypergraph enumerate(const std::string &implementation);
 	edge_vec enumerate(
 #ifdef PRINT_TO_FILE
 		std::ofstream &outfile

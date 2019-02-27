@@ -2,7 +2,7 @@ set (CMAKE_CXX_STANDARD 11)
 
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
-find_package(Boost 1.67.0 REQUIRED COMPONENTS filesystem system)
+find_package(Boost 1.67.0 REQUIRED COMPONENTS filesystem system program_options)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)

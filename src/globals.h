@@ -29,6 +29,9 @@
 #define PRINT_HITTING_SETS_		// print minimal hitting sets to console as they are found	DISABLE FOR BENCHMARKING
 #define PRINT_TO_FILE_			// same as above, but print to file							DISABLE FOR BENCHMARKING
 
+#define GRAPH_EXTENSION ".graph"
+#define TABLE_EXTENSION ".csv"
+
 typedef boost::dynamic_bitset<> edge;
 typedef std::vector<edge> edge_vec;
 typedef std::set<edge> edge_set;

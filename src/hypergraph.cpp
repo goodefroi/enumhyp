@@ -47,6 +47,11 @@ Hypergraph::Hypergraph(const Table &t) {
 	minimize();
 }
 
+Hypergraph::Hypergraph(int num_vertices, edge_vec edges) {
+	m_num_vertices = num_vertices;
+	m_edges = edges;
+}
+
 Hypergraph::~Hypergraph() {
 }
 
@@ -180,6 +185,18 @@ int Hypergraph::extendable(const edge &x, const edge &y) {
 	m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "15", ns_string(oracle_timestamp, now), ns_string(oracle_bf_timestamp, now), std::to_string(iteration_count) });
 #endif
 	return NOT_EXTENDABLE;
+}
+
+Hypergraph Hypergraph::enumerate(const std::string &implementation) {
+	if (implementation == "standard") {
+		return Hypergraph(m_num_vertices, enumerate());
+	}
+	else if (implementation == "legacy") {
+		return Hypergraph(m_num_vertices, enumerate_legacy());
+	}
+	else {
+		std::cerr << "Implementation " << implementation << " not found!";
+	}
 }
 
 edge_vec Hypergraph::enumerate(
