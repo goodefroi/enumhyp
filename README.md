@@ -1,5 +1,5 @@
 # enumhyp
-Source code used to for the performance measurements in [Bläsius, Thomas; Friedrich, Tobias; Lischeid, Julius; Meeks, Kitty; Schirneck, Martin. *Efficiently Enumerating Hitting Sets of Hypergraphs Arising in Data Profiling.* Algorithm Engineering and Experiments (ALENEX) 2019](https://hpi.de/friedrich/news/2018/alenex.html?tx_extbibsonomycsl_publicationlist%5BuserName%5D=puma-friedrich&tx_extbibsonomycsl_publicationlist%5BintraHash%5D=0aecd21152fdb3b41484d610834d7fec&tx_extbibsonomycsl_publicationlist%5BfileName%5D=ALENEX19_UCC.pdf&tx_extbibsonomycsl_publicationlist%5Bcontroller%5D=Document&cHash=af82a4759d1b33a3042ed64d7ce5060c). This tool generates unique column combination (UCC) hypergraphs from CSVs and enumerates all minimal hitting sets of hypergraphs using the enumeration algorithm described in the paper above.
+Source code used to for the performance measurements in [Bläsius, Thomas; Friedrich, Tobias; Lischeid, Julius; Meeks, Kitty; Schirneck, Martin. *Efficiently Enumerating Hitting Sets of Hypergraphs Arising in Data Profiling.* Algorithm Engineering and Experiments (ALENEX) 2019](https://hpi.de/friedrich/research/enumdat). This tool generates unique column combination (UCC) hypergraphs from CSVs and enumerates all minimal hitting sets of hypergraphs using the enumeration algorithm described in the paper above.
 
 ## Build
 ### CMake
