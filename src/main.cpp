@@ -14,19 +14,18 @@ int main(int argc, char *argv[]) {
 		option_description.add_options()
 			("help,h", "show help message")
 			("action,a", po::value<std::string>(&action)->default_value("enumerate"), "generate | enumerate")
-			("path,p", po::value<std::string>()->default_value(fs::current_path().string()), "path to a file or directory")
+			("input,i", po::value<std::string>()->default_value(fs::current_path().string()), "path to a file or directory")
+			("output,o", po::value<std::string>()->default_value(fs::current_path().string()), "path to output file/directory")
 			("randomized_permutations,r", po::value<int>(&randomized_permutations)->default_value(0), "number of random permutations to use (uses input permutation by default)")
-			("implementation,i", po::value<std::vector<std::string>>(), "implementation(s) to use, can be used multiple times, available: standard | legacy | brute_force")
+			("implementation,I", po::value<std::vector<std::string>>(), "implementation(s) to use, can be used multiple times, available: standard | legacy | brute_force")
 			("statistics_directory,s", po::value<std::string>(&statistics_directory)->default_value(fs::current_path().string()), "path to a directory to write statistics to")
-			("brute_force_statistics,B", "collect brute force statistics")
 			("hitting_set_statistics,H", "collect hitting set statistics")
 			("oracle_statistics,O", "collect oracle statistics")
-			("delimiter,d", po::value<char>()->default_value(','), "table delimiter")
-			("output,o", po::value<std::string>()->default_value(fs::current_path().string()), "path to output file/directory")
+			("delimiter,d", po::value<char>()->default_value(','), "table delimiter used during graph generation")
 			;
 
 		po::positional_options_description positional_options_description;
-		positional_options_description.add("action", 1).add("path", 1);
+		positional_options_description.add("action", 1).add("input", 1);
 
 		po::variables_map variables_map;
 		po::store(po::command_line_parser(argc, argv).options(option_description).positional(positional_options_description).run(), variables_map);
@@ -42,30 +41,67 @@ int main(int argc, char *argv[]) {
 			return EXIT_FAILURE;
 		}
 
-		fs::path path = fs::system_complete(fs::path(variables_map["path"].as<std::string>()));
+		fs::path input = fs::system_complete(fs::path(variables_map["input"].as<std::string>()));
 
 		if (action == "enumerate") {
+
 			std::vector<std::string> implementations;
 			if (variables_map.count("implementation")) implementations = variables_map["implementation"].as<std::vector<std::string>>();
 			else implementations.push_back("standard");
 
 			enumerate_configuration configuration;
 			configuration.statistics_directory = fs::system_complete(fs::path(variables_map["statistics_directory"].as<std::string>()));
-			configuration.collect_brute_force_statistics = (bool)variables_map.count("brute_force_statistics");
 			configuration.collect_hitting_set_statistics = (bool)variables_map.count("hitting_set_statistics");
 			configuration.collect_oracle_statistics = (bool)variables_map.count("oracle_statistics");
 
+			if (variables_map.count("output") && randomized_permutations > 0) {
+				std::cerr << "Graphs with randomized permutation cannot be written to output!" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
 			if (configuration.collect_hitting_set_statistics && configuration.collect_oracle_statistics) std::cerr << "WARNING: Collecting hitting set and oracle statistics at the same time. This will lead to imprecise hitting set running time measurements!" << std::endl;
 
-			for (fs::path graph_path : files_from_path(path, GRAPH_EXTENSION)) {
+			std::cout << "graph";
+			if (randomized_permutations > 0) std::cout << ",permutation";
+			for (std::string implementation : implementations) std::cout << "," << implementation << "_running_time_ns";
+			std::cout << std::endl;
+
+			for (fs::path graph_path : files_from_path(input, GRAPH_EXTENSION)) {
 				Hypergraph h = Hypergraph(graph_path.string());
 				configuration.name = graph_path.stem().string();
 				if (randomized_permutations == 0) {
+					std::cout << remove_quotations(graph_path.stem().string());
 					for (std::string implementation : implementations) {
-						std::cerr << "Enumerating " << graph_path.stem() << " using " << implementation << " implementation..." << std::endl;;
 						configuration.implementation = implementation;
-						h.enumerate(configuration);
+						Hypergraph t;
+						auto start = Clock::now();
+						t = h.enumerate(configuration);
+						auto end = Clock::now();
+						std::cout <<"," << ns_string(start, end);
+						if (variables_map.count("output")) {
+							fs::path output_path = fs::system_complete(fs::path(variables_map["output"].as<std::string>()));
+							if (fs::is_directory(input)) {
+								if (!fs::exists(output_path)) {
+									std::cerr << "Output directory " << output_path << " does not exist!" << std::endl;
+									exit(EXIT_FAILURE);
+								}
+								if (!fs::is_directory(output_path)) {
+									std::cerr << "Directory given as input, but output path " << output_path << " does not describe a directory!" << std::endl;
+									exit(EXIT_FAILURE);
+								}
+								output_path /= fs::path(graph_path.stem().string() + "_transversal");
+								output_path.replace_extension(GRAPH_EXTENSION);
+							}
+							else {
+								if (fs::exists(output_path) && fs::is_directory(output_path)) {
+									output_path /= graph_path.stem();
+									output_path.replace_extension(GRAPH_EXTENSION);
+								}
+							}
+							t.save(output_path.string());
+						}
 					}
+					std::cout << std::endl;
 				}
 				else {
 					std::random_device rd;
@@ -75,19 +111,23 @@ int main(int argc, char *argv[]) {
 					for (int i = 0; i < randomized_permutations; ++i) {
 						std::shuffle(p.begin(), p.end(), g);
 						h.permute(p);
+						std::cout << remove_quotations(graph_path.stem().string()) << "," << permutation_string(p);
 						for (std::string implementation : implementations) {
-							std::cerr << "Enumerating " << graph_path.stem() << " using " << implementation << " implementation and permutation " << permutation_string(p) << "..." << std::endl;
 							configuration.implementation = implementation;
+							auto start = Clock::now();
 							h.enumerate(configuration);
+							auto end = Clock::now();
+							std::cout << "," << ns_string(start, end);
 						}
+						std::cout << std::endl;
 					}
 				}
 			}
 		}
 		else if (action == "generate") {
-			for (fs::path table_path : files_from_path(path, TABLE_EXTENSION)) {
+			for (fs::path table_path : files_from_path(input, TABLE_EXTENSION)) {
 				fs::path output_path = fs::system_complete(fs::path(variables_map["output"].as<std::string>()));
-				if (fs::is_directory(path)) {
+				if (fs::is_directory(input)) {
 					if (!fs::exists(output_path)) {
 						std::cerr << "Output directory " << output_path << " does not exist!" << std::endl;
 						exit(EXIT_FAILURE);

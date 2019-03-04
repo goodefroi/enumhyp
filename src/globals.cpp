@@ -79,27 +79,7 @@ std::string permutation_string(const permutation &p) {
 	return s;
 }
 
-std::string pad(std::string s, int length, char c) {
-	std::stringstream ss;
-	ss << std::setw(length) << std::setfill(c) << s;
-	return ss.str();
-}
-
-std::string pad(std::string s, int length) {
-	return pad(s, length, ' ');
-}
-
-std::string pad(int i, int length) {
-	return pad(std::to_string(i), length);
-}
-
-std::string pad(int i, int length, char c) {
-	return pad(std::to_string(i), length, c);
-}
-
-std::string unique_path(std::string p, std::string suffix) {
-	if (!boost::filesystem::exists(p + suffix)) return p + suffix;
-	int index = 1;
-	while (boost::filesystem::exists(p + "_" + std::to_string(index) + suffix)) index++;
-	return p + "_" + std::to_string(index) + suffix;
+std::string remove_quotations(std::string s) {
+	if (s.front() != '"' || s.back() != '"' || s.length() < 2) return s;
+	return s.substr(1, s.length() - 2);
 }

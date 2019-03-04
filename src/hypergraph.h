@@ -41,9 +41,9 @@ private:
 	int extendable(const edge &x, const edge &y);
 	void enumerate(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets);
 	void enumerate_legacy(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets);
-	int Hypergraph::maximum_iteration_count(std::vector<edge_vec> s);
-	int Hypergraph::summed_sx_sizes(std::vector<edge_vec> s);
-	int Hypergraph::total_number_of_vertices_in_s(std::vector<edge_vec> s);
-	int Hypergraph::total_number_of_vertices_in_t(edge_vec t);
-	void Hypergraph::save_statistics();
+	int maximum_iteration_count(std::vector<edge_vec> s);
+	int summed_sx_sizes(std::vector<edge_vec> s);
+	int total_number_of_vertices_in_s(std::vector<edge_vec> s);
+	int total_number_of_vertices_in_t(edge_vec t);
+	void save_statistics();
 };

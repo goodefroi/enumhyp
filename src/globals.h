@@ -30,7 +30,6 @@ struct enumerate_configuration {
 	fs::path statistics_directory;
 	bool collect_hitting_set_statistics;
 	bool collect_oracle_statistics;
-	bool collect_brute_force_statistics;
 };
 
 void print_edge(const edge &e);
@@ -44,9 +43,4 @@ uint64_t duration_ns(Clock::time_point sooner, Clock::time_point later);
 
 edge::size_type last_vertex(edge e);
 std::string permutation_string(const permutation &p);
-std::string pad(std::string s, int lenght, char c);
-std::string pad(std::string s, int length);
-std::string pad(int i, int length, char c);
-std::string pad(int i, int length);
-
-std::string unique_path(std::string p, std::string suffix);
+std::string remove_quotations(std::string s);
