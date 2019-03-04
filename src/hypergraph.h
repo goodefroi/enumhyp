@@ -2,23 +2,18 @@
 
 #include <vector>
 
+#include <boost/filesystem.hpp>
+
 #include "globals.h"
 #include "table.h"
+
+namespace fs = boost::filesystem;
 
 class Hypergraph
 {
 public:
 	int m_num_vertices;
 	edge_vec m_edges;
-#ifdef HITTING_SET_STATS
-	Table m_hitting_set_stats;
-#endif
-#ifdef ORACLE_STATS
-	Table m_oracle_stats;
-#endif
-#ifdef BRUTE_FORCE_STATS
-	Table m_bf_stats;
-#endif
 	Hypergraph();
 	Hypergraph(const Hypergraph &other);
 	Hypergraph(std::string path);
@@ -28,41 +23,27 @@ public:
 	bool is_hitting_set(const edge &h) const;
 	void print_edges() const;
 	void save(std::string path) const;
-	Hypergraph enumerate(const std::string &implementation);
-	edge_vec enumerate(
-#ifdef PRINT_TO_FILE
-		std::ofstream &outfile
-#endif
-	);
-	edge_vec enumerate_legacy(
-#ifdef PRINT_TO_FILE
-		std::ofstream &outfile
-#endif
-	);
+	Hypergraph enumerate(enumerate_configuration configuration);
+	edge_vec enumerate();
+	edge_vec enumerate_legacy();
 	void minimize();
-	void minimize_legacy();
 	void permute(permutation p);
-	void reverse_vertex_order();
-	void order_by_degree();
-	edge_vec brute_force_mhs(
-#ifdef PRINT_TO_FILE
-		std::ofstream &outfile
-#endif
-	);
-	void remove_unused_vertices();
+	edge_vec brute_force_mhs();
 private:
-#if defined(HITTING_SET_STATS) || defined(PRINT_HITTING_SETS) || defined(PRINT_TO_FILE)
+	enumerate_configuration m_configuration;
+	Table m_hitting_set_stats;
+	Table m_oracle_stats;
+	Table m_bf_stats;
 	Clock::time_point m_hitting_set_timestamp;
-#endif
+	Clock::time_point m_oracle_timestamp;
+	Clock::time_point m_oracle_bf_timestamp;
+	int m_iteration_count;
 	int extendable(const edge &x, const edge &y);
-	void enumerate(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-		, std::ofstream &outfile
-#endif
-	);
-	void enumerate_legacy(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-		, std::ofstream &outfile
-#endif
-	);
+	void enumerate(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets);
+	void enumerate_legacy(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets);
+	int Hypergraph::maximum_iteration_count(std::vector<edge_vec> s);
+	int Hypergraph::summed_sx_sizes(std::vector<edge_vec> s);
+	int Hypergraph::total_number_of_vertices_in_s(std::vector<edge_vec> s);
+	int Hypergraph::total_number_of_vertices_in_t(edge_vec t);
+	void Hypergraph::save_statistics();
 };

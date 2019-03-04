@@ -14,13 +14,13 @@ Table::Table(std::string path, char delimiter, int num_records) {
 	std::string line;
 	getline(infile, line);
 	record r;
-	boost::split(r, line, [](char c) {return c == ','; });
+	boost::split(r, line, [delimiter](char c) {return c == delimiter; });
 	m_records.push_back(r);
 	int i_current_line = 2;
 	while (getline(infile, line)) {
 		if (i_current_line > num_records) break;
 		record r;
-		boost::split(r, line, [](char c) {return c == ','; });
+		boost::split(r, line, [delimiter](char c) {return c == delimiter; });
 		if (r.size() != m_records[0].size()) {
 			std::cerr << "Record in line " << i_current_line << " appears to be broken, should be " << m_records[0].size() << " but is " << r.size() << "!" << std::endl;
 			return;

@@ -8,29 +8,14 @@
 #include <chrono>
 
 #include <boost/dynamic_bitset.hpp>
-
-#ifdef _DEBUG
-#define TABLE_DIRECTORY "../data/tables"
-#define GRAPH_DIRECTORY "../data/graphs"
-#define STATS_DIRECTORY "../data/stats"
-#define TEST_DIRECTORY "../data/test"
-#else
-#define TABLE_DIRECTORY "tables"
-#define GRAPH_DIRECTORY "graphs"
-#define STATS_DIRECTORY "stats"
-#define TEST_DIRECTORY "test"
-#endif
+#include <boost/filesystem.hpp>
 
 #define NUM_THREADS 24
 
-#define HITTING_SET_STATS		// collect information about minimal hitting sets found by the enumeration algorithm
-#define ORACLE_STATS			// collect information about every single extension oracle call
-#define BRUTE_FORCE_STATS_		// collect information about minimal hitting sets found by the brute force algorithm
-#define PRINT_HITTING_SETS_		// print minimal hitting sets to console as they are found	DISABLE FOR BENCHMARKING
-#define PRINT_TO_FILE_			// same as above, but print to file							DISABLE FOR BENCHMARKING
-
 #define GRAPH_EXTENSION ".graph"
 #define TABLE_EXTENSION ".csv"
+
+namespace fs = boost::filesystem;
 
 typedef boost::dynamic_bitset<> edge;
 typedef std::vector<edge> edge_vec;
@@ -38,6 +23,15 @@ typedef std::set<edge> edge_set;
 typedef std::vector<edge::size_type> permutation;
 
 typedef std::chrono::high_resolution_clock Clock;
+
+struct enumerate_configuration {
+	std::string name;
+	std::string implementation;
+	fs::path statistics_directory;
+	bool collect_hitting_set_statistics;
+	bool collect_oracle_statistics;
+	bool collect_brute_force_statistics;
+};
 
 void print_edge(const edge &e);
 void print_edge_vec(const edge_vec &v);

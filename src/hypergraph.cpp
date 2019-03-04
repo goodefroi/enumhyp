@@ -87,24 +87,22 @@ bool Hypergraph::is_hitting_set(const edge &h) const {
 }
 
 int Hypergraph::extendable(const edge &x, const edge &y) {
-#ifdef ORACLE_STATS
-	Clock::time_point oracle_timestamp = Clock::now();
-#endif
+	if (m_configuration.collect_oracle_statistics) m_oracle_timestamp = Clock::now();
 	// 2
 	if (x.none()) {
 		// 3
 		if (is_hitting_set(~y)) {
-#ifdef ORACLE_STATS
-			auto now = Clock::now();
-			m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "3", ns_string(oracle_timestamp, now), "0", "0" });
-#endif
+			if (m_configuration.collect_oracle_statistics) {
+				auto now = Clock::now();
+				m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "3", ns_string(m_oracle_timestamp, now), "", "", "", "", "", "", "", "" });
+			}
 			return EXTENDABLE;
 		}
 		// 4
-#ifdef ORACLE_STATS
-		auto now = Clock::now();
-		m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "4", ns_string(oracle_timestamp, now), "0", "0" });
-#endif
+		if (m_configuration.collect_oracle_statistics) {
+			auto now = Clock::now();
+			m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "4", ns_string(m_oracle_timestamp, now), "", "", "", "", "", "", "", "" });
+		}
 		return NOT_EXTENDABLE;
 	}
 	// 5
@@ -127,30 +125,28 @@ int Hypergraph::extendable(const edge &x, const edge &y) {
 	}
 	// 10
 	for (auto sx : s) if (sx.empty()) {
-#ifdef ORACLE_STATS
-		auto now = Clock::now();
-		m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "10", ns_string(oracle_timestamp, now), "0", "0" });
-#endif
+		if (m_configuration.collect_oracle_statistics) {
+			auto now = Clock::now();
+			m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "10", ns_string(m_oracle_timestamp, now), "", "", "", "0", "0", "0", std::to_string(t.size()), std::to_string(total_number_of_vertices_in_t(t)) });
+		}
 		return NOT_EXTENDABLE;
 	}
 	// 11
 	if (t.empty()) {
-#ifdef ORACLE_STATS
-		auto now = Clock::now();
-		m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "11", ns_string(oracle_timestamp, now), "0", "0" });
-#endif
+		if (m_configuration.collect_oracle_statistics) {
+			auto now = Clock::now();
+			m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "11", ns_string(m_oracle_timestamp, now), "", "", std::to_string(maximum_iteration_count(s)), std::to_string(s.size()), std::to_string(summed_sx_sizes(s)), std::to_string(total_number_of_vertices_in_s(s)), "0", "0" });
+		}
 		return MINIMAL;
 	}
 	// 12
-#ifdef ORACLE_STATS
-	int iteration_count = 0;
-	Clock::time_point oracle_bf_timestamp = Clock::now();
-#endif
+	if (m_configuration.collect_oracle_statistics) {
+		m_iteration_count = 0;
+		m_oracle_bf_timestamp = Clock::now();
+	}
 	std::vector<edge::size_type> iteration_position(x.count(), 0);
 	while (true) {
-#ifdef ORACLE_STATS
-		iteration_count++;
-#endif
+		if (m_configuration.collect_oracle_statistics) m_iteration_count++;
 		// 13
 		edge w(m_num_vertices);
 		bool increase_next = true;
@@ -171,212 +167,98 @@ int Hypergraph::extendable(const edge &x, const edge &y) {
 			}
 		}
 		if (all_no_subset) {
-#ifdef ORACLE_STATS
-			auto now = Clock::now();
-			m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "14", ns_string(oracle_timestamp, now), ns_string(oracle_bf_timestamp, now), std::to_string(iteration_count) });
-#endif
+			if (m_configuration.collect_oracle_statistics) {
+				auto now = Clock::now();
+				m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "14", ns_string(m_oracle_timestamp, now), ns_string(m_oracle_bf_timestamp, now), std::to_string(m_iteration_count), std::to_string(maximum_iteration_count(s)), std::to_string(s.size()), std::to_string(summed_sx_sizes(s)), std::to_string(total_number_of_vertices_in_s(s)), std::to_string(t.size()), std::to_string(total_number_of_vertices_in_t(t)) });
+			}
 			return EXTENDABLE;
 		}
 		if (increase_next) break;
 	}
 	// 15
-#ifdef ORACLE_STATS
-	auto now = Clock::now();
-	m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "15", ns_string(oracle_timestamp, now), ns_string(oracle_bf_timestamp, now), std::to_string(iteration_count) });
-#endif
+	if (m_configuration.collect_oracle_statistics) {
+		auto now = Clock::now();
+		m_oracle_stats.add_record({ edge_to_string(x), edge_to_string(y), "15", ns_string(m_oracle_timestamp, now), ns_string(m_oracle_bf_timestamp, now), std::to_string(m_iteration_count), std::to_string(maximum_iteration_count(s)), std::to_string(s.size()), std::to_string(summed_sx_sizes(s)), std::to_string(total_number_of_vertices_in_s(s)), std::to_string(t.size()), std::to_string(total_number_of_vertices_in_t(t)) });
+	}
 	return NOT_EXTENDABLE;
 }
 
-Hypergraph Hypergraph::enumerate(const std::string &implementation) {
-	if (implementation == "standard") {
-		return Hypergraph(m_num_vertices, enumerate());
+Hypergraph Hypergraph::enumerate(enumerate_configuration configuration) {
+	m_configuration = configuration;
+	if (m_configuration.collect_hitting_set_statistics) {
+		m_hitting_set_stats.clear();
+		m_hitting_set_stats.add_record({ "minimal_hitting_set", "delay_ns" });
+		m_hitting_set_timestamp = Clock::now();
 	}
-	else if (implementation == "legacy") {
-		return Hypergraph(m_num_vertices, enumerate_legacy());
+	if (m_configuration.collect_oracle_statistics) {
+		m_oracle_stats.clear();
+		m_oracle_stats.add_record({ "x", "y", "return_line", "total_time_ns", "bf_time_ns", "actual_iteration_count", "maximum_iteration_count", "s_size", "summed_sx_sizes", "total_number_of_vertices_in_s", "t_size", "total_number_of_vertices_in_t" });
 	}
-	else {
-		std::cerr << "Implementation " << implementation << " not found!";
-	}
+	Hypergraph h;
+	if (m_configuration.implementation == "standard") h = Hypergraph(m_num_vertices, enumerate());
+	else if (m_configuration.implementation == "legacy") h = Hypergraph(m_num_vertices, enumerate_legacy());
+	else if (m_configuration.implementation == "brute_force") h = Hypergraph(m_num_vertices, brute_force_mhs());
+	else std::cerr << "Implementation " << m_configuration.implementation << " not found!";
+	save_statistics();
+	return h;
 }
 
-edge_vec Hypergraph::enumerate(
-#ifdef PRINT_TO_FILE
-	std::ofstream &outfile
-#endif
-) {
+edge_vec Hypergraph::enumerate() {
 	edge_vec minimal_hitting_sets;
-#ifdef HITTING_SET_STATS
-	m_hitting_set_stats.clear();
-	m_hitting_set_stats.add_record({ "minimal_hitting_set", "delay_ns" });
-#endif
-#ifdef PRINT_HITTING_SETS
-	std::cout << "ENUMERATION:\nminimal_hitting_set,delay_ns\n";
-#endif
-#ifdef PRINT_TO_FILE
-	outfile << "minimal_hitting_set,delay_ns" << std::endl;
-#endif
-#if defined(HITTING_SET_STATS) || defined(PRINT_HITTING_SETS) || defined(PRINT_TO_FILE)
-	m_hitting_set_timestamp = Clock::now();
-#endif
-#ifdef ORACLE_STATS
-	m_oracle_stats.clear();
-	m_oracle_stats.add_record({ "x", "y", "return_line", "time_ns", "bf_time_ns", "iteration_count" });
-#endif
-	enumerate(edge(m_num_vertices), edge(m_num_vertices), 0, minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-		, outfile
-#endif
-	);
-#ifdef PRINT_HITTING_SETS
-	auto now = Clock::now();
-	std::cout << "until return," << ns_string(m_hitting_set_timestamp, now) << std::endl;
-#endif
-#ifdef PRINT_TO_FILE
-	auto now = Clock::now();
-	outfile << "until return," << ns_string(m_hitting_set_timestamp, now) << std::endl;
-#endif
+	enumerate(edge(m_num_vertices), edge(m_num_vertices), 0, minimal_hitting_sets);
 	return minimal_hitting_sets;
 }
 
-void Hypergraph::enumerate(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-	, std::ofstream &outfile
-#endif
-) {
+void Hypergraph::enumerate(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets) {
 	edge xv = x;
 	xv[r] = 1;
 	switch (extendable(xv, y)) {
 	case MINIMAL:
 	{
 		minimal_hitting_sets.push_back(xv);
-#ifdef HITTING_SET_STATS
-		auto now = Clock::now();
-		m_hitting_set_stats.add_record({ edge_to_string(xv), ns_string(m_hitting_set_timestamp, now) });
-		m_hitting_set_timestamp = Clock::now();
-#endif
-#ifdef PRINT_HITTING_SETS
-		auto now = Clock::now();
-		std::cout << edge_to_string(xv) << "," << ns_string(m_hitting_set_timestamp, now) << "\n";
-		m_hitting_set_timestamp = Clock::now();
-#endif
-#ifdef PRINT_TO_FILE
-		auto now = Clock::now();
-		outfile << edge_to_string(xv) << "," << ns_string(m_hitting_set_timestamp, now) << std::endl;
-		m_hitting_set_timestamp = Clock::now();
-#endif
-
+		if (m_configuration.collect_hitting_set_statistics) {
+			auto now = Clock::now();
+			m_hitting_set_stats.add_record({ edge_to_string(xv), ns_string(m_hitting_set_timestamp, now) });
+			m_hitting_set_timestamp = Clock::now();
+		}
 		break;
 	}
 	case EXTENDABLE:
-		enumerate(xv, y, r + 1, minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-			, outfile
-#endif
-		);
+		enumerate(xv, y, r + 1, minimal_hitting_sets);
 		break;
 	case NOT_EXTENDABLE:
 		edge yv = y;
 		yv[r] = 1;
-		enumerate(x, yv, r + 1, minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-			, outfile
-#endif
-		);
+		enumerate(x, yv, r + 1, minimal_hitting_sets);
 		return;
 	}
 	edge yv = y;
 	yv[r] = 1;
-	if (extendable(x, yv)) enumerate(x, yv, r + 1, minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-		, outfile
-#endif
-	);
+	if (extendable(x, yv)) enumerate(x, yv, r + 1, minimal_hitting_sets);
 }
 
-edge_vec Hypergraph::enumerate_legacy(
-#ifdef PRINT_TO_FILE
-	std::ofstream &outfile
-#endif
-) {
+edge_vec Hypergraph::enumerate_legacy() {
 	edge_vec minimal_hitting_sets;
-#ifdef HITTING_SET_STATS
-	m_hitting_set_stats.clear();
-	m_hitting_set_stats.add_record({ "minimal_hitting_set", "delay_ns" });
-#endif
-#ifdef PRINT_HITTING_SETS
-	std::cout << "ENUMERATION:\nminimal_hitting_set,delay_ns\n";
-#endif
-#ifdef PRINT_TO_FILE
-	outfile << "minimal_hitting_set,delay_ns" << std::endl;
-#endif
-#if defined(HITTING_SET_STATS) || defined(PRINT_HITTING_SETS) || defined(PRINT_TO_FILE)
-	m_hitting_set_timestamp = Clock::now();
-#endif
-#ifdef ORACLE_STATS
-	m_oracle_stats.clear();
-	m_oracle_stats.add_record({ "x", "y", "return_line", "time_ns", "bf_time_ns", "iteration_count" });
-#endif
-	enumerate_legacy(edge(m_num_vertices), edge(m_num_vertices), 0, minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-		, outfile
-#endif
-	);
+	enumerate_legacy(edge(m_num_vertices), edge(m_num_vertices), 0, minimal_hitting_sets);
 	return minimal_hitting_sets;
 }
 
-void Hypergraph::enumerate_legacy(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-	, std::ofstream &outfile
-#endif
-) {
+void Hypergraph::enumerate_legacy(const edge &x, const edge &y, edge::size_type r, edge_vec &minimal_hitting_sets) {
 	if (r == m_num_vertices) {
 		minimal_hitting_sets.push_back(x);
-		#ifdef HITTING_SET_STATS
-		auto now = Clock::now();
-		m_hitting_set_stats.add_record({ edge_to_string(x), ns_string(m_hitting_set_timestamp, now) });
-		m_hitting_set_timestamp = Clock::now();
-#endif
-#ifdef PRINT_HITTING_SETS
-		auto now = Clock::now();
-		std::cout << edge_to_string(x) << "," << ns_string(m_hitting_set_timestamp, now) << "\n";
-		m_hitting_set_timestamp = Clock::now();
-#endif
-#ifdef PRINT_TO_FILE
-		auto now = Clock::now();
-		outfile << edge_to_string(x) << "," << ns_string(m_hitting_set_timestamp, now) << std::endl;
-		m_hitting_set_timestamp = Clock::now();
-#endif
+		if (m_configuration.collect_hitting_set_statistics) {
+			auto now = Clock::now();
+			m_hitting_set_stats.add_record({ edge_to_string(x), ns_string(m_hitting_set_timestamp, now) });
+			m_hitting_set_timestamp = Clock::now();
+		}
 		return;
 	}
 	edge xv = x;
 	edge yv = y;
 	xv[r] = 1;
 	yv[r] = 1;
-	if (extendable(xv, y)) enumerate_legacy(xv, y, r + 1, minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-			, outfile
-#endif
-		);
-	if (extendable(x, yv)) enumerate_legacy(x, yv, r + 1, minimal_hitting_sets
-#ifdef PRINT_TO_FILE
-		, outfile
-#endif
-	);
-}
-
-void Hypergraph::minimize_legacy() {
-	std::vector<bool> marker(m_edges.size(), true);
-	for (edge_vec::size_type i = 0; i < m_edges.size(); ++i) {
-		for (edge_vec::size_type j = 0; j < m_edges.size(); ++j) {
-			if (
-				(i != j)
-				&& ((m_edges[i] & m_edges[j]) == m_edges[i])
-				) marker[j] = false;
-		}
-	}
-	edge_vec new_edges;
-	for (edge_vec::size_type i = 0; i < m_edges.size(); ++i) if (marker[i]) new_edges.push_back(m_edges[i]);
-	m_edges = new_edges;
+	if (extendable(xv, y)) enumerate_legacy(xv, y, r + 1, minimal_hitting_sets);
+	if (extendable(x, yv)) enumerate_legacy(x, yv, r + 1, minimal_hitting_sets);
 }
 
 void Hypergraph::minimize() {
@@ -416,34 +298,15 @@ void Hypergraph::permute(permutation p) {
 	m_edges = new_edges;
 }
 
-void Hypergraph::reverse_vertex_order() {
-	permutation p;
-	for (int i = m_num_vertices - 1; i >= 0; --i) p.push_back(i);
-	permute(p);
-}
-
-edge_vec Hypergraph::brute_force_mhs(
-#ifdef PRINT_TO_FILE
-	std::ofstream &outfile
-#endif
-) {
+edge_vec Hypergraph::brute_force_mhs() {
 	// brute force all minimal hitting sets
 	// this works a bit similar to the apriori algorithm
 	int check_time_and_memory_counter = 0;
 	auto exit_timestamp = Clock::now();
-
-#ifdef BRUTE_FORCE_STATS
-	m_hitting_set_stats.add_record({ "minimal_hitting_set", "delay_ns" });
-#endif
-#ifdef PRINT_HITTING_SETS
-	std::cout << "BRUTE FORCE:\nminimal_hitting_set,delay_ns\n";
-#endif
-#ifdef PRINT_TO_FILE
-	outfile << "minimal_hitting_set,delay_ns" << std::endl;
-#endif
-#if defined(BRUTE_FORCE_STATS) || defined(PRINT_HITTING_SETS) || defined(PRINT_TO_FILE)
-	auto timestamp = Clock::now();
-#endif
+	if (m_configuration.collect_brute_force_statistics) {
+		m_hitting_set_stats.add_record({ "minimal_hitting_set", "delay_ns" });
+		m_hitting_set_timestamp = Clock::now();
+	}
 	edge_vec minimal_hitting_sets;
 	edge_vec incomplete_hitting_sets;
 	for (edge::size_type i = 0; i < m_num_vertices; ++i) {
@@ -451,16 +314,6 @@ edge_vec Hypergraph::brute_force_mhs(
 		e[i] = 1;
 		if (is_hitting_set(e)) {
 			minimal_hitting_sets.push_back(e);
-#ifdef PRINT_HITTING_SETS
-			auto now = Clock::now();
-			std::cout << edge_to_string(e) << "," << ns_string(timestamp, now) << "\n";
-			timestamp = Clock::now();
-#endif
-#ifdef PRINT_TO_FILE
-			auto now = Clock::now();
-			outfile << edge_to_string(e) << "," << ns_string(timestamp, now) << std::endl;
-			timestamp = Clock::now();
-#endif
 		}
 		else incomplete_hitting_sets.push_back(e);
 	}
@@ -487,21 +340,11 @@ edge_vec Hypergraph::brute_force_mhs(
 							if (minimal_hitting_sets.size() == 81) {
 								std::cout << "";
 							};
-#ifdef BRUTE_FORCE_STATS
-							auto now = Clock::now();
-							m_bf_stats.add_record({ edge_to_string(candidate), ns_string(timestamp, now) });
-							timestamp = Clock::now();
-#endif
-#ifdef PRINT_HITTING_SETS
-							auto now = Clock::now();
-							std::cout << edge_to_string(candidate) << "," << ns_string(timestamp, now) << std::endl;
-							timestamp = Clock::now();
-#endif
-#ifdef PRINT_TO_FILE
-							auto now = Clock::now();
-							outfile << edge_to_string(candidate) << "," << ns_string(timestamp, now) << std::endl;
-							timestamp = Clock::now();
-#endif
+							if (m_configuration.collect_brute_force_statistics) {
+								auto now = Clock::now();
+								m_bf_stats.add_record({ edge_to_string(candidate), ns_string(m_hitting_set_timestamp, now) });
+								m_hitting_set_timestamp = Clock::now();
+							}
 						}
 						else new_incomplete_hitting_sets.push_back(candidate);
 					}
@@ -517,50 +360,51 @@ edge_vec Hypergraph::brute_force_mhs(
 				}				
 			}
 		}
-		if (new_incomplete_hitting_sets.empty()) {
-#ifdef PRINT_HITTING_SETS
-			auto now = Clock::now();
-			std::cout << "until return," << ns_string(timestamp, now) << std::endl;
-#endif
-#ifdef PRINT_TO_FILE
-			auto now = Clock::now();
-			outfile << "until return," << ns_string(timestamp, now) << std::endl;
-#endif
-			return minimal_hitting_sets;
-		}
+		if (new_incomplete_hitting_sets.empty()) return minimal_hitting_sets;
 		incomplete_hitting_sets.swap(new_incomplete_hitting_sets);
 	}
 	return minimal_hitting_sets;
 }
 
-void Hypergraph::remove_unused_vertices() {
-	permutation p;
-	edge union_all(m_num_vertices);
-	for (edge e : m_edges) union_all |= e;
-	for (int i = 0; i < m_num_vertices; ++i) {
-		if (union_all[i]) p.push_back(i);
-	}
-	edge_vec new_edges;
-	for (edge e : m_edges) {
-		edge new_edge(p.size());
-		for (int i = 0; i < p.size(); ++i) {
-			if (e[p[i]]) new_edge[i] = 1;
-		}
-		new_edges.push_back(new_edge);
-	}
-	m_num_vertices = (int)p.size();
-	m_edges = new_edges;
+int Hypergraph::maximum_iteration_count(std::vector<edge_vec> s) {
+	if (s.empty()) return 0;
+	int maximum_iteration_count = 1;
+	for (edge_vec sx : s)  maximum_iteration_count *= sx.size();
+	return maximum_iteration_count;
 }
 
-void Hypergraph::order_by_degree() {
-	std::multimap<int, int> mmap;
-	for (int i = 0; i < m_num_vertices; ++i) {
-		int counter = 0;
-		for (edge e : m_edges) if (e[i]) ++counter;
-		mmap.insert(std::pair<int, int>(counter, i));
+int Hypergraph::summed_sx_sizes(std::vector<edge_vec> s) {
+	int summed_sx_sizes = 0;
+	for (edge_vec sx : s) summed_sx_sizes += sx.size();
+	return summed_sx_sizes;
+}
+
+int Hypergraph::total_number_of_vertices_in_s(std::vector<edge_vec> s) {
+	int total_number_of_vertices_in_s = 0;
+	for (edge_vec sx: s) for (edge e : sx) total_number_of_vertices_in_s += e.count();
+	return total_number_of_vertices_in_s;
+}
+
+int Hypergraph::total_number_of_vertices_in_t(edge_vec t) {
+	int total_number_of_vertices_in_t = 0;
+	for (edge e : t) total_number_of_vertices_in_t += e.count();
+	return total_number_of_vertices_in_t;
+}
+
+void Hypergraph::save_statistics() {
+	if (m_configuration.collect_brute_force_statistics) {
+		fs::path brute_force_statistics_path = m_configuration.statistics_directory;
+		brute_force_statistics_path /= (m_configuration.name + "_brute_force_statistics.csv");
+		m_bf_stats.save(brute_force_statistics_path.string());
 	}
-	permutation p;
-	for (auto pair = mmap.rbegin(); pair != mmap.rend(); ++pair) p.push_back(pair->second);
-	std::cout << "Degree order: " << permutation_string(p) << std::endl;
-	permute(p);
+	if (m_configuration.collect_hitting_set_statistics) {
+		fs::path hitting_set_statistics_path = m_configuration.statistics_directory;
+		hitting_set_statistics_path /= (m_configuration.name + "_hitting_set_statistics.csv");
+		m_hitting_set_stats.save(hitting_set_statistics_path.string());
+	}
+	if (m_configuration.collect_oracle_statistics) {
+		fs::path oracle_statistics_path = m_configuration.statistics_directory;
+		oracle_statistics_path /= (m_configuration.name + "_oracle_statistics.csv");
+		m_oracle_stats.save(oracle_statistics_path.string());
+	}
 }
