@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 			("help,h", "show help message")
 			("action,a", po::value<std::string>(&action)->default_value("enumerate"), "generate | enumerate")
 			("input,i", po::value<std::string>()->default_value(fs::current_path().string()), "path to a file or directory")
-			("output,o", po::value<std::string>()->default_value(fs::current_path().string()), "path to output file/directory")
+			("output,o", po::value<std::string>(), "path to output file/directory")
 			("randomized_permutations,r", po::value<int>(&randomized_permutations)->default_value(0), "number of random permutations to use (uses input permutation by default)")
 			("implementation,I", po::value<std::vector<std::string>>(), "implementation(s) to use, can be used multiple times, available: standard | legacy | brute_force")
 			("statistics_directory,s", po::value<std::string>(&statistics_directory)->default_value(fs::current_path().string()), "path to a directory to write statistics to")
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
 		}
 		else if (action == "generate") {
 			for (fs::path table_path : files_from_path(input, TABLE_EXTENSION)) {
-				fs::path output_path = fs::system_complete(fs::path(variables_map["output"].as<std::string>()));
+				fs::path output_path = variables_map.count("output") ? fs::system_complete(fs::path(variables_map["output"].as<std::string>())) : fs::current_path();
 				if (fs::is_directory(input)) {
 					if (!fs::exists(output_path)) {
 						std::cerr << "Output directory " << output_path << " does not exist!" << std::endl;
