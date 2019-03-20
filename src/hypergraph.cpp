@@ -340,7 +340,7 @@ edge_vec Hypergraph::brute_force_mhs() {
 							};
 							if (m_configuration.collect_hitting_set_statistics) {
 								auto now = Clock::now();
-								m_bf_stats.add_record({ edge_to_string(candidate), ns_string(m_hitting_set_timestamp, now) });
+								m_hitting_set_stats.add_record({ edge_to_string(candidate), ns_string(m_hitting_set_timestamp, now) });
 								m_hitting_set_timestamp = Clock::now();
 							}
 						}

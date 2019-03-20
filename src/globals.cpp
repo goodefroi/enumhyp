@@ -34,14 +34,6 @@ std::string ns_string(Clock::time_point sooner, Clock::time_point later) {
 	return std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(later - sooner).count());
 }
 
-std::string m_string(Clock::time_point sooner, Clock::time_point later) {
-	return std::to_string(std::chrono::duration_cast<std::chrono::minutes>(later - sooner).count());
-}
-
-std::string s_string(Clock::time_point sooner, Clock::time_point later) {
-	return std::to_string(std::chrono::duration_cast<std::chrono::seconds>(later - sooner).count());
-}
-
 std::string time_string(Clock::time_point sooner, Clock::time_point later) {
 	auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(later - sooner).count();
 	std::stringstream ss_h, ss_m, ss_s, ss_ms, ss_us, ss_ns;

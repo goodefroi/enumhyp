@@ -36,8 +36,6 @@ void print_edge(const edge &e);
 void print_edge_vec(const edge_vec &v);
 std::string edge_to_string(const edge &e);
 std::string ns_string(Clock::time_point sooner, Clock::time_point later);
-std::string m_string(Clock::time_point sooner, Clock::time_point later);
-std::string s_string(Clock::time_point sooner, Clock::time_point later);
 std::string time_string(Clock::time_point sooner, Clock::time_point later);
 uint64_t duration_ns(Clock::time_point sooner, Clock::time_point later);
 

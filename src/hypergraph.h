@@ -33,7 +33,6 @@ private:
 	enumerate_configuration m_configuration;
 	Table m_hitting_set_stats;
 	Table m_oracle_stats;
-	Table m_bf_stats;
 	Clock::time_point m_hitting_set_timestamp;
 	Clock::time_point m_oracle_timestamp;
 	Clock::time_point m_oracle_bf_timestamp;
